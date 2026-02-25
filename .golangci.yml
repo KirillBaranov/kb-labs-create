@@ -1,0 +1,56 @@
+version: "2"
+
+linters:
+  default: none
+  enable:
+    # Correctness
+    - errcheck       # check all errors are handled
+    - govet          # go vet passes
+    - staticcheck    # comprehensive static analysis (replaces megacheck)
+    - ineffassign    # detect ineffectual assignments
+    - unused         # detect unused code
+
+    # Style / maintainability
+    - gofmt          # enforce standard formatting
+    - goimports      # enforce import ordering
+    - godot          # doc comments end with a period
+    - gocritic       # various opinionated checks
+    - misspell       # catch common misspellings
+
+    # Safety
+    - gosec          # security checks
+    - bodyclose      # http response body closed
+    - noctx          # detect http calls without context
+
+linters-settings:
+  govet:
+    enable-all: true
+    disable:
+      - shadow # too noisy in table-driven tests
+
+  godot:
+    scope: declarations
+
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - style
+    disabled-checks:
+      - commentedOutCode
+      - whyNoLint
+
+  gosec:
+    excludes:
+      - G304 # file inclusion via variable — intentional in loader.go
+
+issues:
+  exclude-rules:
+    # Test files: relax some rules
+    - path: "_test\\.go"
+      linters:
+        - errcheck
+        - gosec
+        - godot
+
+  max-issues-per-linter: 0
+  max-same-issues: 0

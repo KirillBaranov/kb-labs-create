@@ -1,0 +1,22 @@
+{
+  "version": "1.0.0",
+  "registryUrl": "https://registry.npmjs.org",
+  "core": [
+    { "name": "@kb-labs/cli-bin" },
+    { "name": "@kb-labs/sdk" },
+    { "name": "@kb-labs/core-runtime" },
+    { "name": "@kb-labs/core-contracts" },
+    { "name": "@kb-labs/shared-cli-ui" }
+  ],
+  "services": [
+    { "id": "rest",     "pkg": "@kb-labs/rest-api",        "description": "REST API daemon (port 5050)",  "default": true  },
+    { "id": "workflow", "pkg": "@kb-labs/workflow-runtime", "description": "Workflow engine (port 7778)", "default": true  },
+    { "id": "studio",   "pkg": "@kb-labs/studio",          "description": "Web UI (port 3000)",          "default": false }
+  ],
+  "plugins": [
+    { "id": "mind",      "pkg": "@kb-labs/mind",       "description": "AI-powered code search (RAG)", "default": true  },
+    { "id": "agents",    "pkg": "@kb-labs/agents",     "description": "Autonomous agent execution",   "default": false },
+    { "id": "ai-review", "pkg": "@kb-labs/ai-review",  "description": "AI code review",               "default": false },
+    { "id": "commit",    "pkg": "@kb-labs/commit-cli", "description": "AI commit generation",         "default": false }
+  ]
+}

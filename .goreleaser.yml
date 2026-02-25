@@ -1,0 +1,50 @@
+version: 2
+
+project_name: kb-create
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: kb-create
+    main: .
+    binary: kb-create
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w
+        -X main.version={{.Version}}
+        -X main.commit={{.Commit}}
+        -X main.date={{.Date}}
+
+archives:
+  - id: binaries
+    # Produce bare binaries (no tar), named kb-create-<os>-<arch>
+    # so install.sh can download them directly.
+    format: binary
+    name_template: "kb-create-{{ .Os }}-{{ .Arch }}"
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^chore:"
+      - "^ci:"
+
+release:
+  github:
+    owner: kb-labs
+    name: create
+  draft: false
+  prerelease: auto

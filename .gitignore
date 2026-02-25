@@ -1,0 +1,21 @@
+# Build output
+kb-create
+kb-create-*
+dist/
+
+# Go toolchain
+*.test
+*.out
+coverage.html
+
+# goreleaser
+.goreleaser-dist/
+
+# macOS
+.DS_Store
+
+# Editor
+.idea/
+.vscode/
+*.swp
+*.swo
