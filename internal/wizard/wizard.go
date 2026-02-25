@@ -80,23 +80,17 @@ type checkItem struct {
 }
 
 type wizardModel struct {
-	manifest *manifest.Manifest
-
-	// stage: dirs
+	manifest      *manifest.Manifest
+	errMsg        string
+	services      []checkItem
+	plugins       []checkItem
 	platformInput textinput.Model
 	cwdInput      textinput.Model
-
-	// stage: options
-	services []checkItem
-	plugins  []checkItem
-
-	// validation
-	errMsg      string
-	stage       stage
-	activeInput int // 0=platform, 1=cwd
-	cursor      int // global cursor across services+plugins list
-	cancelled   bool
-	confirmed   bool
+	stage         stage
+	activeInput   int
+	cursor        int
+	cancelled     bool
+	confirmed     bool
 }
 
 func newModel(m *manifest.Manifest, opts WizardOptions) wizardModel {
