@@ -8,18 +8,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	versionInfo = "dev"
-	commitInfo  = "none"
-	dateInfo    = "unknown"
-)
-
 // SetVersionInfo is called from main.go with values injected at build time via -ldflags.
 // It must be called before Execute().
 func SetVersionInfo(version, commit, date string) {
-	versionInfo = version
-	commitInfo = commit
-	dateInfo = date
 	rootCmd.SetVersionTemplate(fmt.Sprintf(
 		"kb-create %s (commit %s, built %s)\n", version, commit, date,
 	))

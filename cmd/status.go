@@ -72,4 +72,3 @@ func runStatus(cmd *cobra.Command, args []string) error {
 func dimStr(s string) string {
 	return lipgloss.NewStyle().Foreground(lipgloss.Color("8")).Render(s)
 }
-
