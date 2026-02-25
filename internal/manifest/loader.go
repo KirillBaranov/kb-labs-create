@@ -1,13 +1,15 @@
 package manifest
 
 import (
+	_ "embed"
+
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"time"
-	_ "embed"
 )
 
 //go:embed manifest.json
@@ -60,8 +62,14 @@ func loadRemote(url string, timeout time.Duration) (*Manifest, error) {
 	if timeout == 0 {
 		timeout = 5 * time.Second
 	}
-	client := &http.Client{Timeout: timeout}
-	resp, err := client.Get(url)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("fetch %s: %w", url, err)
+	}
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("fetch %s: %w", url, err)
 	}
@@ -75,7 +83,6 @@ func loadRemote(url string, timeout time.Duration) (*Manifest, error) {
 	}
 	return loadBytes(data)
 }
-
 
 func loadBytes(data []byte) (*Manifest, error) {
 	var m Manifest
