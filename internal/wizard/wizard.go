@@ -11,8 +11,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/bubbles/textinput"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/kb-labs/create/internal/installer"
@@ -21,12 +21,12 @@ import (
 
 // WizardOptions controls wizard behaviour.
 type WizardOptions struct {
-	// Yes skips the TUI and returns defaults immediately.
-	Yes bool
 	// DefaultProjectCWD pre-fills the project directory input.
 	DefaultProjectCWD string
 	// DefaultPlatformDir pre-fills the platform directory input.
 	DefaultPlatformDir string
+	// Yes skips the TUI and returns defaults immediately.
+	Yes bool
 }
 
 // Run shows the interactive wizard and returns the user's selection.
@@ -80,23 +80,23 @@ type checkItem struct {
 }
 
 type wizardModel struct {
-	manifest  *manifest.Manifest
-	stage     stage
-	cancelled bool
-	confirmed bool
+	manifest *manifest.Manifest
 
 	// stage: dirs
 	platformInput textinput.Model
 	cwdInput      textinput.Model
-	activeInput   int // 0=platform, 1=cwd
 
 	// stage: options
 	services []checkItem
 	plugins  []checkItem
-	cursor   int // global cursor across services+plugins list
 
 	// validation
-	errMsg string
+	errMsg      string
+	stage       stage
+	activeInput int // 0=platform, 1=cwd
+	cursor      int // global cursor across services+plugins list
+	cancelled   bool
+	confirmed   bool
 }
 
 func newModel(m *manifest.Manifest, opts WizardOptions) wizardModel {
@@ -147,9 +147,8 @@ func (m wizardModel) Init() tea.Cmd {
 }
 
 func (m wizardModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		return m.handleKey(msg)
+	if key, ok := msg.(tea.KeyMsg); ok {
+		return m.handleKey(key)
 	}
 	// forward to active input
 	var cmd tea.Cmd

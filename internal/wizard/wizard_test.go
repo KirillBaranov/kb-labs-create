@@ -115,7 +115,7 @@ func TestExpandHomeTilde(t *testing.T) {
 	}
 
 	got := expandHome("~/projects/foo")
-	want := filepath.Join(home, "projects/foo")
+	want := filepath.Join(home, "projects", "foo")
 	if got != want {
 		t.Errorf("expandHome(~/projects/foo) = %q, want %q", got, want)
 	}
