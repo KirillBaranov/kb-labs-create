@@ -15,9 +15,9 @@ import (
 // fakePM is a no-op package manager for use in tests.
 type fakePM struct {
 	failErr error
-	calls   []string // records what was installed/updated
 	name    string
-	failOn  string // if non-empty, return error when this pkg is in pkgs
+	failOn  string
+	calls   []string
 }
 
 func (f *fakePM) Name() string { return f.name }
