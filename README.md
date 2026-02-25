@@ -342,8 +342,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
 ## Support & Resources
 
 - **Issues**: [Report bugs →](https://github.com/kb-labs/create/issues)
-- **Discussions**: [Ask questions →](https://github.com/kb-labs/kb-labs/discussions)
-- **KB Labs Platform**: [Main repository →](https://github.com/kb-labs/kb-labs)
+- **Discussions**: [Ask questions →](https://github.com/kb-labs/discussions)
+- **KB Labs Platform**: [Main repository →](https://github.com/kb-labs)
 
 ## License
 
