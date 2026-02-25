@@ -22,13 +22,13 @@ const (
 // PlatformConfig is the persistent state written to <platform>/.kb/kb.config.json.
 // Version field enables future migrations.
 type PlatformConfig struct {
-	Version     int               `json:"version"`
+	// Snapshot of the manifest at install time — used for update diffing.
+	Manifest    manifest.Manifest `json:"manifest"`
+	InstalledAt time.Time         `json:"installedAt"`
 	Platform    string            `json:"platform"`
 	CWD         string            `json:"cwd"`
 	PM          string            `json:"pm"`
-	InstalledAt time.Time         `json:"installedAt"`
-	// Snapshot of the manifest at install time — used for update diffing.
-	Manifest    manifest.Manifest `json:"manifest"`
+	Version     int               `json:"version"`
 }
 
 // ConfigPath returns the path to the config file for the given platform directory.
@@ -49,7 +49,7 @@ func Write(platformDir string, cfg *PlatformConfig) error {
 	}
 
 	path := filepath.Join(dir, configFile)
-	if err := os.WriteFile(path, data, 0o644); err != nil {
+	if err := os.WriteFile(path, data, 0o600); err != nil {
 		return fmt.Errorf("write config: %w", err)
 	}
 	return nil

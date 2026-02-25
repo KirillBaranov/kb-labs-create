@@ -86,8 +86,9 @@ func TestReadMissing(t *testing.T) {
 
 // TestConfigPath verifies the expected config file path.
 func TestConfigPath(t *testing.T) {
-	got := ConfigPath("/platform")
-	want := filepath.Join("/platform", configDir, configFile)
+	base := t.TempDir()
+	got := ConfigPath(base)
+	want := filepath.Join(base, configDir, configFile)
 	if got != want {
 		t.Errorf("ConfigPath = %q, want %q", got, want)
 	}

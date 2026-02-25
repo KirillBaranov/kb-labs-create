@@ -8,10 +8,10 @@ import (
 
 // Progress reports installation progress for a single step.
 type Progress struct {
-	Package string
-	Done    bool
 	Error   error
+	Package string
 	Line    string // raw output line for logging
+	Done    bool
 }
 
 // InstalledPackage describes a package found in node_modules.

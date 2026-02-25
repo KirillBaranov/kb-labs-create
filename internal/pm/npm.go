@@ -103,5 +103,5 @@ func ensurePackageJSON(dir string) error {
 		return nil
 	}
 	content := `{"name":"kb-platform","version":"1.0.0","private":true}` + "\n"
-	return os.WriteFile(pkgPath, []byte(content), 0o644)
+	return os.WriteFile(pkgPath, []byte(content), 0o600)
 }
