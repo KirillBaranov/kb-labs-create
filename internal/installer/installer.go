@@ -53,35 +53,27 @@ type UpdateResult struct {
 type Installer struct {
 	PM     pm.PackageManager
 	Log    *logger.Logger
-	OnStep func(step, total int, label string) // optional progress callback
+	OnStep func(step, total int, label string) // called at each named stage
+	OnLine func(line string)                   // called for each raw output line from pm
 }
 
 // Install installs the platform according to sel.
+// All selected packages are passed to the package manager in a single
+// invocation so it can resolve and deduplicate the dependency graph at once.
 func (ins *Installer) Install(sel *Selection, m *manifest.Manifest) (*Result, error) {
 	start := time.Now()
 
-	ins.step(1, 4, "Installing core packages")
-	if err := ins.installGroup(sel.PlatformDir, m.CorePackageNames()); err != nil {
-		return nil, fmt.Errorf("core: %w", err)
+	// Collect every package that needs to be installed in one shot.
+	allPkgs := m.CorePackageNames()
+	allPkgs = append(allPkgs, ins.selectedPkgs(m.Services, sel.Services)...)
+	allPkgs = append(allPkgs, ins.selectedPkgs(m.Plugins, sel.Plugins)...)
+
+	ins.step(1, 2, fmt.Sprintf("Installing %d packages via %s", len(allPkgs), ins.PM.Name()))
+	if err := ins.installGroup(sel.PlatformDir, allPkgs); err != nil {
+		return nil, fmt.Errorf("install: %w", err)
 	}
 
-	ins.step(2, 4, "Installing services")
-	svcPkgs := ins.selectedPkgs(m.Services, sel.Services)
-	if len(svcPkgs) > 0 {
-		if err := ins.installGroup(sel.PlatformDir, svcPkgs); err != nil {
-			return nil, fmt.Errorf("services: %w", err)
-		}
-	}
-
-	ins.step(3, 4, "Installing plugins")
-	pluginPkgs := ins.selectedPkgs(m.Plugins, sel.Plugins)
-	if len(pluginPkgs) > 0 {
-		if err := ins.installGroup(sel.PlatformDir, pluginPkgs); err != nil {
-			return nil, fmt.Errorf("plugins: %w", err)
-		}
-	}
-
-	ins.step(4, 4, "Writing config")
+	ins.step(2, 2, "Writing config")
 	cfg := config.NewConfig(sel.PlatformDir, sel.ProjectCWD, ins.PM.Name(), m)
 	if err := config.Write(sel.PlatformDir, cfg); err != nil {
 		return nil, fmt.Errorf("config: %w", err)
@@ -173,41 +165,38 @@ func (ins *Installer) step(n, total int, label string) {
 	}
 }
 
-// installGroup installs pkgs into dir, draining progress lines to the log.
-// It waits for the log-drain goroutine to finish before returning so no
-// output is lost even when the channel is buffered.
+// installGroup installs pkgs into dir, draining progress lines to the log
+// and forwarding each line to OnLine if set.
+// It waits for the drain goroutine to finish before returning so no output
+// is lost even when the channel is buffered.
 func (ins *Installer) installGroup(dir string, pkgs []string) error {
-	ch := make(chan pm.Progress, 64)
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		for p := range ch {
-			if p.Line != "" {
-				ins.Log.Printf("  %s", p.Line)
-			}
-		}
-	}()
-	err := ins.PM.Install(dir, pkgs, ch)
-	close(ch)
-	<-done // wait for drain goroutine to flush all buffered lines
-	return err
+	return ins.runGroup(dir, pkgs, ins.PM.Install)
 }
 
 // updateGroup updates pkgs in dir, draining progress lines to the log.
 func (ins *Installer) updateGroup(dir string, pkgs []string) error {
+	return ins.runGroup(dir, pkgs, ins.PM.Update)
+}
+
+// runGroup is the shared driver for installGroup / updateGroup.
+func (ins *Installer) runGroup(dir string, pkgs []string, op func(string, []string, chan<- pm.Progress) error) error {
 	ch := make(chan pm.Progress, 64)
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
 		for p := range ch {
-			if p.Line != "" {
-				ins.Log.Printf("  %s", p.Line)
+			if p.Line == "" {
+				continue
+			}
+			ins.Log.Printf("  %s", p.Line)
+			if ins.OnLine != nil {
+				ins.OnLine(p.Line)
 			}
 		}
 	}()
-	err := ins.PM.Update(dir, pkgs, ch)
+	err := op(dir, pkgs, ch)
 	close(ch)
-	<-done
+	<-done // wait for drain goroutine to flush all buffered lines
 	return err
 }
 

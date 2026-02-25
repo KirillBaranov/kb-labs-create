@@ -341,8 +341,8 @@ func TestInstallInvokesOnStep(t *testing.T) {
 		t.Fatalf("Install() error = %v", err)
 	}
 
-	if len(steps) != 4 {
-		t.Errorf("OnStep called %d times, want 4; steps = %v", len(steps), steps)
+	if len(steps) != 2 {
+		t.Errorf("OnStep called %d times, want 2; steps = %v", len(steps), steps)
 	}
 }
 
