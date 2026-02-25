@@ -101,10 +101,10 @@ func runCreate(cmd *cobra.Command, args []string) error {
 // spinner renders a rotating indicator with a label and a detail line
 // that updates in-place while the install is running.
 type spinner struct {
-	mu     sync.Mutex
+	done   chan struct{}
 	label  string
 	detail string
-	done   chan struct{}
+	mu     sync.Mutex
 }
 
 func newSpinner() *spinner { return &spinner{done: make(chan struct{})} }
