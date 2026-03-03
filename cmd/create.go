@@ -4,16 +4,19 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 
+	"github.com/kb-labs/create/internal/config"
 	"github.com/kb-labs/create/internal/installer"
 	"github.com/kb-labs/create/internal/logger"
 	"github.com/kb-labs/create/internal/manifest"
 	"github.com/kb-labs/create/internal/pm"
+	"github.com/kb-labs/create/internal/telemetry"
 	"github.com/kb-labs/create/internal/wizard"
 )
 
@@ -38,6 +41,10 @@ func runCreate(cmd *cobra.Command, args []string) error {
 		projectCWD = abs
 	}
 
+	// ── Telemetry consent ────────────────────────────────────────────────
+	tc, tcfg := initTelemetry(cmd.Root().Version)
+	defer tc.Flush()
+
 	// Load manifest (embedded for now).
 	m, err := manifest.LoadDefault()
 	if err != nil {
@@ -53,6 +60,9 @@ func runCreate(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err // includes "cancelled"
 	}
+
+	// Attach telemetry config so it gets persisted in kb.config.json.
+	sel.Telemetry = tcfg
 
 	// Create platform directory.
 	if err := os.MkdirAll(sel.PlatformDir, 0o755); err != nil {
@@ -70,6 +80,11 @@ func runCreate(cmd *cobra.Command, args []string) error {
 
 	packageManager := pm.Detect()
 	log.Printf("Using %s", packageManager.Name())
+
+	tc.Set("pm", packageManager.Name())
+	tc.Set("services", strings.Join(sel.Services, ","))
+	tc.Set("plugins", strings.Join(sel.Plugins, ","))
+	tc.Track("install_started", nil)
 
 	sp := newSpinner()
 
@@ -89,11 +104,48 @@ func runCreate(cmd *cobra.Command, args []string) error {
 	sp.stop(err)
 
 	if err != nil {
+		tc.Track("install_failed", map[string]string{"error": err.Error()})
 		return fmt.Errorf("installation failed: %w", err)
 	}
 
+	tc.Track("install_completed", map[string]string{
+		"duration_s": fmt.Sprintf("%.0f", result.Duration.Seconds()),
+	})
+
 	printSuccess(result)
 	return nil
+}
+
+// initTelemetry resolves consent and returns a ready-to-use Client plus the
+// TelemetryConfig to be persisted in kb.config.json. In non-interactive mode
+// (--yes) we never prompt — if no prior consent exists telemetry stays off.
+func initTelemetry(version string) (*telemetry.Client, config.TelemetryConfig) {
+	disabled := config.TelemetryConfig{Enabled: false}
+
+	if telemetry.EnvDisabled() {
+		return telemetry.Nop(), disabled
+	}
+
+	if flagYes {
+		// Non-interactive: no prompt, telemetry off. Generate a deviceId
+		// anyway so the user can enable telemetry later without re-install.
+		return telemetry.Nop(), config.TelemetryConfig{
+			Enabled:  false,
+			DeviceID: telemetry.GenerateDeviceID(),
+		}
+	}
+
+	consent := telemetry.AskConsent()
+	tcfg := config.TelemetryConfig{
+		Enabled:  consent.Enabled,
+		DeviceID: consent.DeviceID,
+	}
+
+	if !consent.Enabled {
+		return telemetry.Nop(), tcfg
+	}
+
+	return telemetry.New(telemetry.Endpoint, consent.DeviceID, version), tcfg
 }
 
 // ── spinner ───────────────────────────────────────────────────────────────────

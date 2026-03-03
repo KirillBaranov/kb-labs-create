@@ -158,7 +158,7 @@ func TestDiffDetectsAddedPackage(t *testing.T) {
 		Version: "1.0.0",
 		Core:    []manifest.Package{{Name: "@kb-labs/cli-bin"}},
 	}
-	cfg := config.NewConfig(dir, dir, "npm", &installed)
+	cfg := config.NewConfig(dir, dir, "npm", &installed, config.TelemetryConfig{})
 	if err := config.Write(dir, cfg); err != nil {
 		t.Fatalf("config.Write() error = %v", err)
 	}
@@ -192,7 +192,7 @@ func TestDiffDetectsRemovedPackage(t *testing.T) {
 			{Name: "@kb-labs/old-pkg"},
 		},
 	}
-	cfg := config.NewConfig(dir, dir, "npm", &installed)
+	cfg := config.NewConfig(dir, dir, "npm", &installed, config.TelemetryConfig{})
 	if err := config.Write(dir, cfg); err != nil {
 		t.Fatalf("config.Write() error = %v", err)
 	}

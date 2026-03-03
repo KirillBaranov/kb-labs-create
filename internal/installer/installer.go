@@ -5,7 +5,6 @@ package installer
 
 import (
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/kb-labs/create/internal/logger"
 	"github.com/kb-labs/create/internal/manifest"
 	"github.com/kb-labs/create/internal/pm"
+	"github.com/kb-labs/create/internal/scaffold"
 )
 
 // Selection holds what the user chose to install.
@@ -21,6 +21,7 @@ type Selection struct {
 	ProjectCWD  string
 	Services    []string // component IDs
 	Plugins     []string // component IDs
+	Telemetry   config.TelemetryConfig
 }
 
 // Result is returned after a successful Install.
@@ -74,14 +75,19 @@ func (ins *Installer) Install(sel *Selection, m *manifest.Manifest) (*Result, er
 	}
 
 	ins.step(2, 2, "Writing config")
-	cfg := config.NewConfig(sel.PlatformDir, sel.ProjectCWD, ins.PM.Name(), m)
+	cfg := config.NewConfig(sel.PlatformDir, sel.ProjectCWD, ins.PM.Name(), m, sel.Telemetry)
 	if err := config.Write(sel.PlatformDir, cfg); err != nil {
 		return nil, fmt.Errorf("config: %w", err)
 	}
 
-	// Create project .kb dir so the platform can write artifacts there.
-	if err := os.MkdirAll(sel.ProjectCWD+"/.kb", 0o755); err != nil {
-		return nil, fmt.Errorf("project dir: %w", err)
+	// Create project .kb dir with scaffold config so the user has a
+	// documented starting point (JSONC with inline comments).
+	if err := scaffold.WriteProjectConfig(sel.ProjectCWD, scaffold.Options{
+		PlatformDir: sel.PlatformDir,
+		Services:    sel.Services,
+		Plugins:     sel.Plugins,
+	}); err != nil {
+		return nil, fmt.Errorf("scaffold project config: %w", err)
 	}
 
 	return &Result{
