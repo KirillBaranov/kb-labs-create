@@ -66,19 +66,18 @@ case "$OS" in
 esac
 
 if [ "$VERSION" = "latest" ]; then
-  # GitHub "latest" ignores pre-releases. We resolve the newest tag via API
-  # so beta channels keep working with the default install command.
-  RESOLVED_VERSION="$(curl -fsSL "https://api.github.com/repos/${REPO}/releases?per_page=1" | sed -n 's/^[[:space:]]*"tag_name":[[:space:]]*"\([^"]*\)".*$/\1/p' | head -n 1)"
-  if [ -z "$RESOLVED_VERSION" ]; then
-    echo "Error: unable to resolve latest release tag for ${REPO}." >&2
-    echo "Try: install.sh --version <tag>" >&2
-    exit 1
+  # Prefer API-resolved tag (works with pre-releases), but gracefully fall
+  # back to GitHub's built-in latest/download if API is rate-limited.
+  RESOLVED_VERSION="$(curl -fsSL "https://api.github.com/repos/${REPO}/releases?per_page=1" 2>/dev/null | sed -n 's/^[[:space:]]*"tag_name":[[:space:]]*"\([^"]*\)".*$/\1/p' | head -n 1)"
+  if [ -n "$RESOLVED_VERSION" ]; then
+    BASE_URL="https://github.com/${REPO}/releases/download/${RESOLVED_VERSION}"
+  else
+    BASE_URL="https://github.com/${REPO}/releases/latest/download"
   fi
 else
   RESOLVED_VERSION="$VERSION"
+  BASE_URL="https://github.com/${REPO}/releases/download/${RESOLVED_VERSION}"
 fi
-
-BASE_URL="https://github.com/${REPO}/releases/download/${RESOLVED_VERSION}"
 
 BINARY_FILE="${BINARY}-${OS}-${ARCH}"
 BINARY_URL="${BASE_URL}/${BINARY_FILE}"
@@ -135,7 +134,11 @@ esac
 echo ""
 echo "✓ ${BINARY} installed to $DEST"
 echo "✓ Checksum verified (${BINARY_FILE})"
-echo "✓ Version: ${RESOLVED_VERSION}"
+if [ -n "$RESOLVED_VERSION" ]; then
+  echo "✓ Version: ${RESOLVED_VERSION}"
+else
+  echo "✓ Version: latest"
+fi
 echo ""
 echo "Get started:"
 echo "  kb-create my-project"
