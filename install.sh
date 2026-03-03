@@ -17,6 +17,19 @@ Options:
 EOF
 }
 
+print_banner() {
+  cat <<'EOF'
+  _    _  ____    _          _           
+ | | _| || __ )  | |    __ _| |__  ___   
+ | |/ / ||  _ \  | |   / _` | '_ \/ __|  
+ |   <| || |_) | | |__| (_| | |_) \__ \  
+ |_|\_\_||____/  |_____\__,_|_.__/|___/  
+
+EOF
+  echo "KB Labs Launcher installer"
+  echo ""
+}
+
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --version)
@@ -82,6 +95,20 @@ fi
 BINARY_FILE="${BINARY}-${OS}-${ARCH}"
 BINARY_URL="${BASE_URL}/${BINARY_FILE}"
 CHECKSUMS_URL="${BASE_URL}/checksums.txt"
+
+print_banner
+echo "Repository: ${REPO}"
+if [ "$VERSION" = "latest" ]; then
+  if [ -n "$RESOLVED_VERSION" ]; then
+    echo "Channel: latest (resolved to ${RESOLVED_VERSION})"
+  else
+    echo "Channel: latest (GitHub latest/download)"
+  fi
+else
+  echo "Channel: pinned (${RESOLVED_VERSION})"
+fi
+echo "Target: ${OS}/${ARCH}  ->  ${BINARY_FILE}"
+echo ""
 
 TMP_BIN="$(mktemp)"
 TMP_SUM="$(mktemp)"
