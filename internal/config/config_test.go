@@ -25,7 +25,7 @@ func sampleManifest() manifest.Manifest {
 // TestNewConfig verifies that NewConfig populates all required fields.
 func TestNewConfig(t *testing.T) {
 	m := sampleManifest()
-	cfg := NewConfig("/tmp/platform", "/tmp/project", "pnpm", &m)
+	cfg := NewConfig("/tmp/platform", "/tmp/project", "pnpm", &m, TelemetryConfig{Enabled: true, DeviceID: "test-id"})
 
 	if cfg.Version != configVersion {
 		t.Errorf("Version = %d, want %d", cfg.Version, configVersion)
@@ -45,7 +45,7 @@ func TestNewConfig(t *testing.T) {
 func TestWriteThenRead(t *testing.T) {
 	dir := t.TempDir()
 	m := sampleManifest()
-	want := NewConfig(dir, "/some/project", "npm", &m)
+	want := NewConfig(dir, "/some/project", "npm", &m, TelemetryConfig{Enabled: true, DeviceID: "abc123"})
 	// Fix timestamp for deterministic comparison.
 	want.InstalledAt = time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 
@@ -101,7 +101,7 @@ func TestWriteCreatesDirectory(t *testing.T) {
 	os.RemoveAll(filepath.Join(dir, ".kb"))
 
 	m := sampleManifest()
-	cfg := NewConfig(dir, dir, "npm", &m)
+	cfg := NewConfig(dir, dir, "npm", &m, TelemetryConfig{})
 	if err := Write(dir, cfg); err != nil {
 		t.Fatalf("Write() error = %v", err)
 	}
