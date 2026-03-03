@@ -5,6 +5,7 @@ REPO="KirillBaranov/kb-labs-create"
 BINARY="kb-create"
 DEST="${HOME}/.local/bin/${BINARY}"
 VERSION="latest"
+RESOLVED_VERSION=""
 
 usage() {
   cat <<'EOF'
@@ -65,10 +66,19 @@ case "$OS" in
 esac
 
 if [ "$VERSION" = "latest" ]; then
-  BASE_URL="https://github.com/${REPO}/releases/latest/download"
+  # GitHub "latest" ignores pre-releases. We resolve the newest tag via API
+  # so beta channels keep working with the default install command.
+  RESOLVED_VERSION="$(curl -fsSL "https://api.github.com/repos/${REPO}/releases?per_page=1" | sed -n 's/^[[:space:]]*"tag_name":[[:space:]]*"\([^"]*\)".*$/\1/p' | head -n 1)"
+  if [ -z "$RESOLVED_VERSION" ]; then
+    echo "Error: unable to resolve latest release tag for ${REPO}." >&2
+    echo "Try: install.sh --version <tag>" >&2
+    exit 1
+  fi
 else
-  BASE_URL="https://github.com/${REPO}/releases/download/${VERSION}"
+  RESOLVED_VERSION="$VERSION"
 fi
+
+BASE_URL="https://github.com/${REPO}/releases/download/${RESOLVED_VERSION}"
 
 BINARY_FILE="${BINARY}-${OS}-${ARCH}"
 BINARY_URL="${BASE_URL}/${BINARY_FILE}"
@@ -125,6 +135,7 @@ esac
 echo ""
 echo "✓ ${BINARY} installed to $DEST"
 echo "✓ Checksum verified (${BINARY_FILE})"
+echo "✓ Version: ${RESOLVED_VERSION}"
 echo ""
 echo "Get started:"
 echo "  kb-create my-project"
