@@ -98,7 +98,7 @@ func TestConfigPath(t *testing.T) {
 func TestWriteCreatesDirectory(t *testing.T) {
 	dir := t.TempDir()
 	// Remove any pre-existing .kb directory.
-	os.RemoveAll(filepath.Join(dir, ".kb"))
+	_ = os.RemoveAll(filepath.Join(dir, ".kb"))
 
 	m := sampleManifest()
 	cfg := NewConfig(dir, dir, "npm", &m, TelemetryConfig{})

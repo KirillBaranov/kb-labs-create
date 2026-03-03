@@ -16,7 +16,7 @@ func TestNewCreatesLogFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New() error = %v", err)
 	}
-	defer l.Close()
+	defer func() { _ = l.Close() }()
 
 	logPath := l.LogPath()
 	if logPath == "" {
@@ -37,7 +37,7 @@ func TestNewLogPathUnderPlatformDir(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New() error = %v", err)
 	}
-	defer l.Close()
+	defer func() { _ = l.Close() }()
 
 	wantPrefix := filepath.Join(dir, ".kb", "logs")
 	if !strings.HasPrefix(l.LogPath(), wantPrefix) {
@@ -54,7 +54,7 @@ func TestNewLogFileNameFormat(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New() error = %v", err)
 	}
-	defer l.Close()
+	defer func() { _ = l.Close() }()
 
 	base := filepath.Base(l.LogPath())
 	if !strings.HasPrefix(base, "install-") || !strings.HasSuffix(base, ".log") {
@@ -115,7 +115,7 @@ func TestLatestLogPathEmpty(t *testing.T) {
 func TestLatestLogPathReturnsMostRecent(t *testing.T) {
 	dir := t.TempDir()
 	logsDir := filepath.Join(dir, ".kb", "logs")
-	if err := os.MkdirAll(logsDir, 0o755); err != nil {
+	if err := os.MkdirAll(logsDir, 0o750); err != nil {
 		t.Fatal(err)
 	}
 
@@ -125,7 +125,7 @@ func TestLatestLogPathReturnsMostRecent(t *testing.T) {
 		"install-20260102-000000.log",
 	}
 	for _, name := range files {
-		if err := os.WriteFile(filepath.Join(logsDir, name), []byte(name), 0o644); err != nil {
+		if err := os.WriteFile(filepath.Join(logsDir, name), []byte(name), 0o600); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -141,12 +141,12 @@ func TestLatestLogPathReturnsMostRecent(t *testing.T) {
 func TestLatestLogPathSingleFile(t *testing.T) {
 	dir := t.TempDir()
 	logsDir := filepath.Join(dir, ".kb", "logs")
-	if err := os.MkdirAll(logsDir, 0o755); err != nil {
+	if err := os.MkdirAll(logsDir, 0o750); err != nil {
 		t.Fatal(err)
 	}
 
 	name := "install-20260101-120000.log"
-	if err := os.WriteFile(filepath.Join(logsDir, name), []byte("data"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(logsDir, name), []byte("data"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 

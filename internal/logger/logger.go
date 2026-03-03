@@ -19,13 +19,14 @@ type Logger struct {
 // New creates a logger that writes to stderr and to <platformDir>/.kb/logs/install-<ts>.log.
 func New(platformDir string) (*Logger, error) {
 	logsDir := filepath.Join(platformDir, ".kb", "logs")
-	if err := os.MkdirAll(logsDir, 0o755); err != nil {
+	if err := os.MkdirAll(logsDir, 0o750); err != nil {
 		return nil, fmt.Errorf("create logs dir: %w", err)
 	}
 
 	ts := time.Now().Format("20060102-150405")
 	logPath := filepath.Join(logsDir, fmt.Sprintf("install-%s.log", ts))
 
+	// #nosec G304 -- logPath is constructed from trusted platformDir and timestamp.
 	f, err := os.Create(logPath)
 	if err != nil {
 		return nil, fmt.Errorf("create log file: %w", err)
@@ -57,7 +58,7 @@ func (l *Logger) Write(p []byte) (n int, err error) {
 
 // Printf writes a formatted line to the log.
 func (l *Logger) Printf(format string, args ...any) {
-	fmt.Fprintf(l.w, format+"\n", args...)
+	_, _ = fmt.Fprintf(l.w, format+"\n", args...)
 }
 
 // Close flushes and closes the log file.

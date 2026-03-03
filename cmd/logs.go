@@ -38,11 +38,12 @@ func runLogs(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("no install logs found in %s", platformDir)
 	}
 
+	// #nosec G304 -- logPath is derived from platformDir/.kb/logs and selected internally.
 	f, err := os.Open(logPath)
 	if err != nil {
 		return fmt.Errorf("open log: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	// Print existing content.
 	if _, err := io.Copy(os.Stdout, f); err != nil {

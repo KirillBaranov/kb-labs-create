@@ -20,12 +20,13 @@ type Options struct {
 // WriteProjectConfig generates .kb/kb.config.jsonc inside projectDir.
 func WriteProjectConfig(projectDir string, opts Options) error {
 	dir := filepath.Join(projectDir, ".kb")
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+	if err := os.MkdirAll(dir, 0o750); err != nil {
 		return fmt.Errorf("create .kb dir: %w", err)
 	}
 
 	content := generate(opts)
 	path := filepath.Join(dir, "kb.config.jsonc")
+	// #nosec G306 -- project config is expected to be readable in workspace.
 	return os.WriteFile(path, []byte(content), 0o644)
 }
 

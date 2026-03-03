@@ -2,6 +2,7 @@ package pm
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -29,7 +30,8 @@ func (n *NpmManager) ListInstalled(dir string) ([]InstalledPackage, error) {
 		return nil, nil
 	}
 
-	cmd := exec.Command("npm", "list", "--prefix", dir, "--json", "--depth=0")
+	// #nosec G204 -- command name is fixed; dir is passed as an argument.
+	cmd := exec.CommandContext(context.Background(), "npm", "list", "--prefix", dir, "--json", "--depth=0")
 	cmd.Dir = dir
 	out, err := cmd.Output()
 	if err != nil && len(out) == 0 {
@@ -57,7 +59,8 @@ func (n *NpmManager) run(dir string, args []string, progress chan<- Progress) er
 		return err
 	}
 
-	cmd := exec.Command("npm", args...)
+	// #nosec G204 -- command name is fixed; args are internal package names/options.
+	cmd := exec.CommandContext(context.Background(), "npm", args...)
 	cmd.Dir = dir
 
 	stdout, err := cmd.StdoutPipe()
@@ -95,7 +98,7 @@ func (n *NpmManager) run(dir string, args []string, progress chan<- Progress) er
 
 // ensurePackageJSON creates a minimal package.json if none exists.
 func ensurePackageJSON(dir string) error {
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+	if err := os.MkdirAll(dir, 0o750); err != nil {
 		return err
 	}
 	pkgPath := filepath.Join(dir, "package.json")

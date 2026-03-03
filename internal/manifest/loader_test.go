@@ -58,7 +58,7 @@ func TestLoadLocalOverride(t *testing.T) {
 
 	tmp := t.TempDir()
 	path := filepath.Join(tmp, "manifest.json")
-	if err := os.WriteFile(path, data, 0o644); err != nil {
+	if err := os.WriteFile(path, data, 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -78,7 +78,7 @@ func TestLoadRemoteOK(t *testing.T) {
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		w.Write(data)
+		_, _ = w.Write(data)
 	}))
 	defer srv.Close()
 
@@ -117,7 +117,9 @@ func TestLoadRemoteFallsBackToLocalOverride(t *testing.T) {
 
 	tmp := t.TempDir()
 	path := filepath.Join(tmp, "manifest.json")
-	os.WriteFile(path, data, 0o644)
+	if err := os.WriteFile(path, data, 0o600); err != nil {
+		t.Fatal(err)
+	}
 
 	// Use an unreachable URL so remote fails immediately.
 	m, err := Load(LoadOptions{
@@ -137,7 +139,9 @@ func TestLoadRemoteFallsBackToLocalOverride(t *testing.T) {
 func TestLoadInvalidJSON(t *testing.T) {
 	tmp := t.TempDir()
 	path := filepath.Join(tmp, "bad.json")
-	os.WriteFile(path, []byte("{not valid json"), 0o644)
+	if err := os.WriteFile(path, []byte("{not valid json"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 
 	_, err := Load(LoadOptions{LocalOverride: path})
 	if err == nil {

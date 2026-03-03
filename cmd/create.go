@@ -65,7 +65,7 @@ func runCreate(cmd *cobra.Command, args []string) error {
 	sel.Telemetry = tcfg
 
 	// Create platform directory.
-	if err := os.MkdirAll(sel.PlatformDir, 0o755); err != nil {
+	if err := os.MkdirAll(sel.PlatformDir, 0o750); err != nil {
 		return fmt.Errorf("create platform dir: %w", err)
 	}
 
@@ -74,7 +74,7 @@ func runCreate(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	defer log.Close()
+	defer func() { _ = log.Close() }()
 
 	fmt.Println()
 

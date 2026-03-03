@@ -39,6 +39,7 @@ func Load(opts LoadOptions) (*Manifest, error) {
 	}
 
 	if opts.LocalOverride != "" {
+		// #nosec G304 -- LocalOverride is an explicit CLI/config override path.
 		data, readErr := os.ReadFile(opts.LocalOverride)
 		if readErr == nil {
 			// File exists — parse errors are always fatal (no silent fallback).
@@ -69,11 +70,12 @@ func loadRemote(url string, timeout time.Duration) (*Manifest, error) {
 		return nil, fmt.Errorf("fetch %s: %w", url, err)
 	}
 	client := &http.Client{}
+	// #nosec G704 -- URL is explicitly provided as a manifest source override.
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("fetch %s: %w", url, err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("fetch %s: status %d", url, resp.StatusCode)
 	}

@@ -68,7 +68,7 @@ func TestEnsurePackageJSONIdempotent(t *testing.T) {
 	pkgPath := filepath.Join(dir, "package.json")
 
 	custom := `{"name":"custom","version":"9.9.9"}` + "\n"
-	if err := os.WriteFile(pkgPath, []byte(custom), 0o644); err != nil {
+	if err := os.WriteFile(pkgPath, []byte(custom), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -76,6 +76,7 @@ func TestEnsurePackageJSONIdempotent(t *testing.T) {
 		t.Fatalf("ensurePackageJSON() error = %v", err)
 	}
 
+	// #nosec G304 -- pkgPath points to a test temp file created in this test.
 	got, err := os.ReadFile(pkgPath)
 	if err != nil {
 		t.Fatal(err)

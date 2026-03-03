@@ -340,8 +340,8 @@ func (m wizardModel) renderItem(idx int, item checkItem) string {
 func (m wizardModel) viewConfirm() string {
 	var b strings.Builder
 	b.WriteString(titleStyle.Render("  kb-create") + "  ready to install\n\n")
-	b.WriteString(fmt.Sprintf("  Platform:  %s\n", focusStyle.Render(m.platformInput.Value())))
-	b.WriteString(fmt.Sprintf("  Project:   %s\n\n", focusStyle.Render(m.cwdInput.Value())))
+	_, _ = fmt.Fprintf(&b, "  Platform:  %s\n", focusStyle.Render(m.platformInput.Value()))
+	_, _ = fmt.Fprintf(&b, "  Project:   %s\n\n", focusStyle.Render(m.cwdInput.Value()))
 
 	var selected []string
 	for _, s := range m.services {

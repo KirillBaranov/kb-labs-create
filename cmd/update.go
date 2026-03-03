@@ -43,7 +43,7 @@ func runUpdate(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	defer log.Close()
+	defer func() { _ = log.Close() }()
 
 	ins := &installer.Installer{
 		PM:  pm.Detect(),

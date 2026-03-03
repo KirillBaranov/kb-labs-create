@@ -2,6 +2,7 @@ package pm
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"fmt"
 	"os/exec"
@@ -25,7 +26,8 @@ func (p *PnpmManager) Update(dir string, pkgs []string, progress chan<- Progress
 }
 
 func (p *PnpmManager) ListInstalled(dir string) ([]InstalledPackage, error) {
-	cmd := exec.Command("pnpm", "list", "--dir", dir, "--json", "--depth=0")
+	// #nosec G204 -- command name is fixed; dir is passed as an argument.
+	cmd := exec.CommandContext(context.Background(), "pnpm", "list", "--dir", dir, "--json", "--depth=0")
 	cmd.Dir = dir
 	out, err := cmd.Output()
 	if err != nil && len(out) == 0 {
@@ -62,7 +64,8 @@ func (p *PnpmManager) run(dir string, args []string, progress chan<- Progress) e
 	wsPath := filepath.Join(dir, "pnpm-workspace.yaml")
 	_ = wsPath // intentionally not creating it
 
-	cmd := exec.Command("pnpm", args...)
+	// #nosec G204 -- command name is fixed; args are internal package names/options.
+	cmd := exec.CommandContext(context.Background(), "pnpm", args...)
 	cmd.Dir = dir
 
 	stdout, err := cmd.StdoutPipe()

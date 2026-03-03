@@ -47,7 +47,7 @@ func ConfigPath(platformDir string) string {
 // Write persists config to <platformDir>/.kb/kb.config.json.
 func Write(platformDir string, cfg *PlatformConfig) error {
 	dir := filepath.Join(platformDir, configDir)
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+	if err := os.MkdirAll(dir, 0o750); err != nil {
 		return fmt.Errorf("create config dir: %w", err)
 	}
 
@@ -66,6 +66,7 @@ func Write(platformDir string, cfg *PlatformConfig) error {
 // Read loads and parses the config from <platformDir>/.kb/kb.config.json.
 func Read(platformDir string) (*PlatformConfig, error) {
 	path := ConfigPath(platformDir)
+	// #nosec G304 -- path is deterministic (<platformDir>/.kb/kb.config.json).
 	data, err := os.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {

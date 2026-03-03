@@ -129,9 +129,10 @@ func (c *Client) send(e Event) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
+	// #nosec G704 -- endpoint is controlled by application configuration.
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return
 	}
-	resp.Body.Close()
+	_ = resp.Body.Close()
 }
