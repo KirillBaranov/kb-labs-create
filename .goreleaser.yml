@@ -44,7 +44,7 @@ changelog:
 
 release:
   github:
-    owner: kb-labs
-    name: create
+    owner: KirillBaranov
+    name: kb-labs-create
   draft: false
   prerelease: auto
