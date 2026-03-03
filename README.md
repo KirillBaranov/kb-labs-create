@@ -30,6 +30,14 @@ curl https://raw.githubusercontent.com/kb-labs/create/main/install.sh | sh
 
 This downloads the correct binary for your OS/arch and places it in `~/.local/bin/kb-create`.
 
+Install a specific version:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/kb-labs/create/main/install.sh | sh -s -- --version v1.2.3
+```
+
+`install.sh` verifies SHA-256 checksums against the release `checksums.txt` before installing.
+
 ### Create a project
 
 ```bash
