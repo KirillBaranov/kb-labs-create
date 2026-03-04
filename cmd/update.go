@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 
 	"github.com/kb-labs/create/internal/config"
@@ -29,6 +29,8 @@ func init() {
 }
 
 func runUpdate(cmd *cobra.Command, args []string) error {
+	out := newOutput()
+
 	platformDir, err := resolvePlatformDir(cmd)
 	if err != nil {
 		return err
@@ -50,21 +52,21 @@ func runUpdate(cmd *cobra.Command, args []string) error {
 		Log: log,
 	}
 
-	fmt.Println("Checking for updates...")
+	out.Info("Checking for updates...")
 	diff, err := ins.Diff(platformDir, m)
 	if err != nil {
 		return err
 	}
 
 	if !diff.HasChanges() {
-		fmt.Println(lipgloss.NewStyle().Foreground(lipgloss.Color("10")).Render("✓ Already up to date"))
+		out.OK("Already up to date")
 		return nil
 	}
 
-	printDiff(diff)
+	printDiff(out, diff)
 
 	if !confirm("Apply updates? [Y/n] ") {
-		fmt.Println("Cancelled.")
+		out.Warn("Cancelled.")
 		return nil
 	}
 
@@ -73,32 +75,29 @@ func runUpdate(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("update failed: %w", err)
 	}
 
-	ok := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("10"))
-	dim := lipgloss.NewStyle().Foreground(lipgloss.Color("8"))
-	fmt.Printf("\n%s\n", ok.Render("✓ Update complete")+dim.Render(fmt.Sprintf("  (%s)", result.Duration.Round(1e8))))
+	out.OK(fmt.Sprintf("Update complete (%s)", result.Duration.Round(100*time.Millisecond)))
 	return nil
 }
 
-func printDiff(d *installer.UpdateDiff) {
-	add := lipgloss.NewStyle().Foreground(lipgloss.Color("10"))
-	upd := lipgloss.NewStyle().Foreground(lipgloss.Color("12"))
-	rem := lipgloss.NewStyle().Foreground(lipgloss.Color("9"))
-	dim := lipgloss.NewStyle().Foreground(lipgloss.Color("8"))
+func printDiff(out output, d *installer.UpdateDiff) {
+	out.Section("Update plan")
 
-	fmt.Println()
 	if len(d.Added) > 0 {
+		out.Info("Add:")
 		for _, p := range d.Added {
-			fmt.Printf("  %s  %s\n", add.Render("+"), p)
+			fmt.Printf("  %s %s\n", out.bullet.Render("+"), p)
 		}
 	}
 	if len(d.Updated) > 0 {
+		out.Info("Update:")
 		for _, p := range d.Updated {
-			fmt.Printf("  %s  %s\n", upd.Render("↑"), dim.Render(p))
+			fmt.Printf("  %s %s\n", out.bullet.Render("↑"), out.dim.Render(p))
 		}
 	}
 	if len(d.Removed) > 0 {
+		out.Info("Remove:")
 		for _, p := range d.Removed {
-			fmt.Printf("  %s  %s\n", rem.Render("-"), p)
+			fmt.Printf("  %s %s\n", out.bullet.Render("-"), p)
 		}
 	}
 	fmt.Println()

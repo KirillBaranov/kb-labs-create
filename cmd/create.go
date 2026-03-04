@@ -222,31 +222,27 @@ func (s *spinner) stop(err error) {
 	// Clear both lines used by the spinner.
 	fmt.Print("\r\033[K\033[1B\r\033[K\033[1A")
 
+	out := newOutput()
 	if err == nil {
-		ok := lipgloss.NewStyle().Foreground(lipgloss.Color("10"))
-		fmt.Printf("  %s %s\n", ok.Render("✓"), label)
+		out.OK(label)
 	} else {
-		bad := lipgloss.NewStyle().Foreground(lipgloss.Color("9"))
-		fmt.Printf("  %s %s\n", bad.Render("✗"), label)
+		out.Err(label)
 	}
 }
 
 // ── success banner ────────────────────────────────────────────────────────────
 
 func printSuccess(r *installer.Result) {
-	ok := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("10"))
-	dim := lipgloss.NewStyle().Foreground(lipgloss.Color("8"))
-	val := lipgloss.NewStyle().Foreground(lipgloss.Color("14"))
+	out := newOutput()
 
 	fmt.Println()
-	fmt.Println(ok.Render("✓ Installation complete") + dim.Render(fmt.Sprintf("  (%s)", r.Duration.Round(time.Second))))
-	fmt.Println()
-	fmt.Printf("  Platform:  %s\n", val.Render(r.PlatformDir))
-	fmt.Printf("  Project:   %s\n", val.Render(r.ProjectCWD))
-	fmt.Printf("  Config:    %s\n", val.Render(r.ConfigPath))
-	fmt.Println()
-	fmt.Printf("  %s\n", dim.Render("Next steps:"))
-	fmt.Printf("    cd %s\n", r.ProjectCWD)
-	fmt.Printf("    kb dev:start\n")
+	out.OK(fmt.Sprintf("Installation complete (%s)", r.Duration.Round(time.Second)))
+	out.Section("Paths")
+	out.KeyValue("Platform", r.PlatformDir)
+	out.KeyValue("Project", r.ProjectCWD)
+	out.KeyValue("Config", r.ConfigPath)
+	out.Section("Next steps")
+	fmt.Printf("  %s\n", out.dim.Render("cd "+r.ProjectCWD))
+	fmt.Printf("  %s\n", out.dim.Render("kb dev:start"))
 	fmt.Println()
 }

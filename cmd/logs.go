@@ -28,6 +28,8 @@ func init() {
 }
 
 func runLogs(cmd *cobra.Command, args []string) error {
+	out := newOutput()
+
 	platformDir, err := resolvePlatformDir(cmd)
 	if err != nil {
 		return err
@@ -37,6 +39,7 @@ func runLogs(cmd *cobra.Command, args []string) error {
 	if logPath == "" {
 		return fmt.Errorf("no install logs found in %s", platformDir)
 	}
+	out.Info("Reading log: " + logPath)
 
 	// #nosec G304 -- logPath is derived from platformDir/.kb/logs and selected internally.
 	f, err := os.Open(logPath)
@@ -53,6 +56,8 @@ func runLogs(cmd *cobra.Command, args []string) error {
 	if !flagFollow {
 		return nil
 	}
+	out.Info("Follow mode enabled (Ctrl+C to stop)")
+	fmt.Println()
 
 	// Follow mode: poll for new content.
 	for {
