@@ -18,6 +18,7 @@
 - ✅ **CWD binding** — all CLI calls and artifacts are scoped to your project folder
 - ✅ **Update with diff** — see exactly what changes before applying
 - ✅ **Install logs** — every run is logged, follow with `--follow`
+- ✅ **Environment doctor** — `kb-create doctor` checks PATH, tooling, and network
 - ✅ **pnpm-first** — uses pnpm if available, falls back to npm
 
 ## Quick Start
@@ -33,10 +34,11 @@ This downloads the correct binary for your OS/arch and places it in `~/.local/bi
 Install a specific version:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/KirillBaranov/kb-labs-create/main/install.sh | sh -s -- --version v1.2.3
+curl -fsSL https://raw.githubusercontent.com/KirillBaranov/kb-labs-create/main/install.sh | sh -s -- --version v0.2.1
 ```
 
 `install.sh` verifies SHA-256 checksums against the release `checksums.txt` before installing.
+For pre-releases (for example `v0.2.0-beta.1`) always pass `--version`.
 
 ### Create a project
 
@@ -133,11 +135,15 @@ kb-create update --platform ~/kb-platform
 
 **Example output:**
 ```
-Checking for updates...
+[INFO] Checking for updates...
 
-  + @kb-labs/new-plugin         (new)
-  ↑ @kb-labs/cli-bin            (update available)
-  - @kb-labs/old-package        (removed from manifest)
+[INFO] Update plan
+[INFO] Add:
+  ● @kb-labs/new-plugin
+[INFO] Update:
+  ● @kb-labs/cli-bin
+[INFO] Remove:
+  ● @kb-labs/old-package
 
 Apply updates? [Y/n]
 ```
@@ -153,21 +159,22 @@ kb-create status --platform ~/kb-platform
 
 **Example output:**
 ```
-  Platform:   ~/kb-platform
-  Project:    ~/projects/my-project
-  PM:         pnpm
-  Installed:  2026-02-25 10:00
-  Manifest:   1.0.0
+[INFO] Installation Status
+  Platform:  ~/kb-platform
+  Project:   ~/projects/my-project
+  PM:        pnpm
+  Installed: 2026-02-25 10:00
+  Manifest:  1.0.0
 
-  Core packages:
+[INFO] Core packages
     ● @kb-labs/cli-bin
     ● @kb-labs/sdk
 
-  Services:
+[INFO] Services
     ● rest       REST API daemon (port 5050)
     ● workflow   Workflow engine (port 7778)
 
-  Plugins:
+[INFO] Plugins
     ● mind       AI-powered code search (RAG)
 ```
 
@@ -180,6 +187,21 @@ kb-create logs                       # print last log
 kb-create logs --follow              # stream in real time (like tail -f)
 kb-create logs --platform ~/kb-platform
 ```
+
+### `kb-create doctor`
+
+Runs environment diagnostics used by installer/runtime.
+
+```bash
+kb-create doctor
+```
+
+Checks:
+- `PATH` contains `~/.local/bin`
+- `node`
+- `git`
+- `docker`
+- network reachability to `github.com`
 
 ## Installation
 
@@ -213,7 +235,7 @@ chmod +x ~/.local/bin/kb-create
 
 ```bash
 git clone https://github.com/KirillBaranov/kb-labs-create
-cd create
+cd kb-labs-create
 go build -o kb-create .
 ```
 
@@ -254,7 +276,9 @@ kb-labs-create/
 │   ├── create.go                  ← default command: wizard → install
 │   ├── update.go                  ← diff → confirm → npm update
 │   ├── status.go                  ← read config, pretty-print
-│   └── logs.go                    ← cat / tail -f install log
+│   ├── logs.go                    ← cat / tail -f install log
+│   ├── doctor.go                  ← environment diagnostics
+│   └── output.go                  ← unified CLI output styles
 └── internal/
     ├── manifest/
     │   ├── types.go               ← Manifest, Package, Component structs
@@ -327,7 +351,7 @@ npm install -g pnpm
 ```bash
 # Clone
 git clone https://github.com/KirillBaranov/kb-labs-create
-cd create
+cd kb-labs-create
 
 # Install dependencies
 go mod download

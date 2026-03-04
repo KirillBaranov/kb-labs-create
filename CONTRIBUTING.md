@@ -16,7 +16,7 @@ Thanks for your interest in contributing! This document covers the development w
 ```bash
 # Clone the repository
 git clone https://github.com/KirillBaranov/kb-labs-create
-cd create
+cd kb-labs-create
 
 # Download dependencies
 go mod download
@@ -95,8 +95,8 @@ Tests are table-driven and live alongside the code they test (`*_test.go`).
 Releases are built automatically via goreleaser on GitHub Actions when a tag is pushed:
 
 ```bash
-git tag v1.2.3
-git push origin v1.2.3
+git tag v0.2.1
+git push origin v0.2.1
 ```
 
 To test the release build locally:
