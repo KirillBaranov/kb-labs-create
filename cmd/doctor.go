@@ -30,6 +30,7 @@ func init() {
 }
 
 func runDoctor(cmd *cobra.Command, args []string) error {
+	out := newOutput()
 	checks := []doctorCheck{
 		checkPath(),
 		checkBinary("node", "--version"),
@@ -39,20 +40,23 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 	}
 
 	okCount := 0
+	out.Section("Environment Doctor")
 	for _, c := range checks {
 		if c.OK {
 			okCount++
-			fmt.Printf("✓ %-12s %s\n", c.Name, c.Details)
+			out.OK(fmt.Sprintf("%-12s %s", c.Name, c.Details))
 		} else {
-			fmt.Printf("✗ %-12s %s\n", c.Name, c.Details)
+			out.Err(fmt.Sprintf("%-12s %s", c.Name, c.Details))
 		}
 	}
 
 	fmt.Println()
-	fmt.Printf("Doctor summary: %d/%d checks passed\n", okCount, len(checks))
+	summary := fmt.Sprintf("Doctor summary: %d/%d checks passed", okCount, len(checks))
 	if okCount != len(checks) {
+		out.Warn(summary)
 		return fmt.Errorf("some checks failed")
 	}
+	out.OK(summary)
 	return nil
 }
 
