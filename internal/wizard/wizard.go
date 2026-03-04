@@ -52,15 +52,27 @@ func Run(m *manifest.Manifest, opts WizardOptions) (*installer.Selection, error)
 // ── styles ────────────────────────────────────────────────────────────────────
 
 var (
-	titleStyle    = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("12"))
-	sectionStyle  = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("8"))
-	selectedStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("10"))
-	normalStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("7"))
-	dimStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("8"))
-	focusStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("14"))
-	errorStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("9"))
+	titleStyle    lipgloss.Style
+	sectionStyle  lipgloss.Style
+	selectedStyle lipgloss.Style
+	normalStyle   lipgloss.Style
+	dimStyle      lipgloss.Style
+	focusStyle    lipgloss.Style
+	errorStyle    lipgloss.Style
 	helpStyle     = dimStyle
 )
+
+func init() {
+	enabled := colorEnabled()
+	titleStyle = lipgloss.NewStyle().Bold(true).Foreground(color(enabled, "12"))
+	sectionStyle = lipgloss.NewStyle().Bold(true).Foreground(color(enabled, "8"))
+	selectedStyle = lipgloss.NewStyle().Foreground(color(enabled, "10"))
+	normalStyle = lipgloss.NewStyle().Foreground(color(enabled, "7"))
+	dimStyle = lipgloss.NewStyle().Foreground(color(enabled, "8"))
+	focusStyle = lipgloss.NewStyle().Foreground(color(enabled, "14"))
+	errorStyle = lipgloss.NewStyle().Foreground(color(enabled, "9"))
+	helpStyle = dimStyle
+}
 
 // ── model stages ─────────────────────────────────────────────────────────────
 
@@ -420,4 +432,25 @@ func expandHome(path string) string {
 		return filepath.Join(home, path[2:])
 	}
 	return path
+}
+
+func color(enabled bool, ansi string) lipgloss.TerminalColor {
+	if !enabled {
+		return lipgloss.NoColor{}
+	}
+	return lipgloss.Color(ansi)
+}
+
+func colorEnabled() bool {
+	if os.Getenv("NO_COLOR") != "" {
+		return false
+	}
+	if strings.EqualFold(os.Getenv("TERM"), "dumb") {
+		return false
+	}
+	fi, err := os.Stdout.Stat()
+	if err != nil {
+		return false
+	}
+	return (fi.Mode() & os.ModeCharDevice) != 0
 }
