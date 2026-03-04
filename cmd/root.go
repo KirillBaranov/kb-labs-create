@@ -27,7 +27,8 @@ Examples:
   kb-create my-project --yes     silent install with defaults
   kb-create update               update an installed platform
   kb-create status               show installation status
-  kb-create logs                 show install log`,
+  kb-create logs                 show install log
+  kb-create doctor               verify local environment`,
 	RunE: runCreate,
 	Args: cobra.MaximumNArgs(1),
 }

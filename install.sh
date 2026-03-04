@@ -6,6 +6,7 @@ BINARY="kb-create"
 DEST="${HOME}/.local/bin/${BINARY}"
 VERSION="latest"
 RESOLVED_VERSION=""
+START_TS="$(date +%s)"
 
 usage() {
   cat <<'EOF'
@@ -153,10 +154,14 @@ case ":$PATH:" in
   *":${HOME}/.local/bin:"*) ;;
   *)
     echo ""
-    echo "Add to your shell profile (~/.zshrc or ~/.bashrc):"
+    echo "Ensure this directory is in your PATH:"
     echo "  export PATH=\"\$HOME/.local/bin:\$PATH\""
+    echo "Add it to your shell profile (~/.zshrc or ~/.bashrc)."
     ;;
 esac
+
+END_TS="$(date +%s)"
+ELAPSED="$((END_TS - START_TS))"
 
 echo ""
 echo "✓ ${BINARY} installed to $DEST"
@@ -166,6 +171,7 @@ if [ -n "$RESOLVED_VERSION" ]; then
 else
   echo "✓ Version: latest"
 fi
+echo "✓ Installation completed in ${ELAPSED}s"
 echo ""
 echo "Get started:"
 echo "  kb-create my-project"
