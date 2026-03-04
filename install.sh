@@ -8,6 +8,30 @@ VERSION="latest"
 RESOLVED_VERSION=""
 START_TS="$(date +%s)"
 
+# Colors are enabled only for interactive terminals and when NO_COLOR is unset.
+if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
+  C_RESET="$(printf '\033[0m')"
+  C_BOLD="$(printf '\033[1m')"
+  C_DIM="$(printf '\033[2m')"
+  C_CYAN="$(printf '\033[36m')"
+  C_GREEN="$(printf '\033[32m')"
+  C_YELLOW="$(printf '\033[33m')"
+  C_RED="$(printf '\033[31m')"
+else
+  C_RESET=""
+  C_BOLD=""
+  C_DIM=""
+  C_CYAN=""
+  C_GREEN=""
+  C_YELLOW=""
+  C_RED=""
+fi
+
+info() { printf "%s[INFO]%s %s\n" "$C_CYAN" "$C_RESET" "$1"; }
+ok() { printf "%s[ OK ]%s %s\n" "$C_GREEN" "$C_RESET" "$1"; }
+warn() { printf "%s[WARN]%s %s\n" "$C_YELLOW" "$C_RESET" "$1"; }
+err() { printf "%s[ERR ]%s %s\n" "$C_RED" "$C_RESET" "$1" >&2; }
+
 usage() {
   cat <<'EOF'
 Usage: install.sh [--version <tag>]
@@ -27,7 +51,7 @@ print_banner() {
  |_|\_\_||____/  |_____\__,_|_.__/|___/  
 
 EOF
-  echo "KB Labs Launcher installer"
+  printf "%sKB Labs Launcher installer%s\n" "$C_BOLD" "$C_RESET"
   echo ""
 }
 
@@ -55,7 +79,7 @@ while [ "$#" -gt 0 ]; do
 done
 
 if ! command -v curl >/dev/null 2>&1; then
-  echo "Error: curl is required but not found in PATH." >&2
+  err "curl is required but not found in PATH."
   exit 1
 fi
 
@@ -66,7 +90,7 @@ case "$ARCH" in
   x86_64) ARCH="amd64" ;;
   aarch64|arm64) ARCH="arm64" ;;
   *)
-    echo "Unsupported architecture: $ARCH" >&2
+    err "Unsupported architecture: $ARCH"
     exit 1
     ;;
 esac
@@ -74,7 +98,7 @@ esac
 case "$OS" in
   darwin|linux) ;;
   *)
-    echo "Unsupported OS: $OS" >&2
+    err "Unsupported OS: $OS"
     exit 1
     ;;
 esac
@@ -86,6 +110,7 @@ if [ "$VERSION" = "latest" ]; then
   if [ -n "$RESOLVED_VERSION" ]; then
     BASE_URL="https://github.com/${REPO}/releases/download/${RESOLVED_VERSION}"
   else
+    warn "GitHub API unavailable; falling back to releases/latest/download."
     BASE_URL="https://github.com/${REPO}/releases/latest/download"
   fi
 else
@@ -98,17 +123,17 @@ BINARY_URL="${BASE_URL}/${BINARY_FILE}"
 CHECKSUMS_URL="${BASE_URL}/checksums.txt"
 
 print_banner
-echo "Repository: ${REPO}"
+info "Repository: ${REPO}"
 if [ "$VERSION" = "latest" ]; then
   if [ -n "$RESOLVED_VERSION" ]; then
-    echo "Channel: latest (resolved to ${RESOLVED_VERSION})"
+    info "Channel: latest (resolved to ${RESOLVED_VERSION})"
   else
-    echo "Channel: latest (GitHub latest/download)"
+    info "Channel: latest (GitHub latest/download)"
   fi
 else
-  echo "Channel: pinned (${RESOLVED_VERSION})"
+  info "Channel: pinned (${RESOLVED_VERSION})"
 fi
-echo "Target: ${OS}/${ARCH}  ->  ${BINARY_FILE}"
+info "Target: ${OS}/${ARCH}  ->  ${BINARY_FILE}"
 echo ""
 
 TMP_BIN="$(mktemp)"
@@ -118,15 +143,15 @@ cleanup() {
 }
 trap cleanup EXIT
 
-echo "Downloading ${BINARY_FILE}..."
+info "Downloading ${BINARY_FILE}..."
 curl -fsSL "$BINARY_URL" -o "$TMP_BIN"
 
-echo "Downloading checksums..."
+info "Downloading checksums..."
 curl -fsSL "$CHECKSUMS_URL" -o "$TMP_SUM"
 
 EXPECTED="$(grep "  ${BINARY_FILE}$" "$TMP_SUM" | awk '{print $1}' | head -n 1)"
 if [ -z "$EXPECTED" ]; then
-  echo "Error: checksum for ${BINARY_FILE} not found in checksums.txt." >&2
+  err "Checksum for ${BINARY_FILE} not found in checksums.txt."
   exit 1
 fi
 
@@ -135,14 +160,14 @@ if command -v sha256sum >/dev/null 2>&1; then
 elif command -v shasum >/dev/null 2>&1; then
   ACTUAL="$(shasum -a 256 "$TMP_BIN" | awk '{print $1}')"
 else
-  echo "Error: neither sha256sum nor shasum found for checksum verification." >&2
+  err "Neither sha256sum nor shasum found for checksum verification."
   exit 1
 fi
 
 if [ "$EXPECTED" != "$ACTUAL" ]; then
-  echo "Error: checksum mismatch for ${BINARY_FILE}." >&2
-  echo "Expected: $EXPECTED" >&2
-  echo "Actual:   $ACTUAL" >&2
+  err "Checksum mismatch for ${BINARY_FILE}."
+  err "Expected: $EXPECTED"
+  err "Actual:   $ACTUAL"
   exit 1
 fi
 
@@ -154,9 +179,9 @@ case ":$PATH:" in
   *":${HOME}/.local/bin:"*) ;;
   *)
     echo ""
-    echo "Ensure this directory is in your PATH:"
-    echo "  export PATH=\"\$HOME/.local/bin:\$PATH\""
-    echo "Add it to your shell profile (~/.zshrc or ~/.bashrc)."
+    warn "Ensure this directory is in your PATH:"
+    printf "  %sexport PATH=\"\\$HOME/.local/bin:\\$PATH\"%s\n" "$C_DIM" "$C_RESET"
+    warn "Add it to your shell profile (~/.zshrc or ~/.bashrc)."
     ;;
 esac
 
@@ -164,15 +189,15 @@ END_TS="$(date +%s)"
 ELAPSED="$((END_TS - START_TS))"
 
 echo ""
-echo "✓ ${BINARY} installed to $DEST"
-echo "✓ Checksum verified (${BINARY_FILE})"
+ok "${BINARY} installed to $DEST"
+ok "Checksum verified (${BINARY_FILE})"
 if [ -n "$RESOLVED_VERSION" ]; then
-  echo "✓ Version: ${RESOLVED_VERSION}"
+  ok "Version: ${RESOLVED_VERSION}"
 else
-  echo "✓ Version: latest"
+  ok "Version: latest"
 fi
-echo "✓ Installation completed in ${ELAPSED}s"
+ok "Installation completed in ${ELAPSED}s"
 echo ""
-echo "Get started:"
-echo "  kb-create my-project"
-echo "  kb-create status"
+printf "%sGet started:%s\n" "$C_BOLD" "$C_RESET"
+printf "  %skb-create my-project%s\n" "$C_DIM" "$C_RESET"
+printf "  %skb-create status%s\n" "$C_DIM" "$C_RESET"
